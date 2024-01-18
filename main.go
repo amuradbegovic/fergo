@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 )
 
 func main() {
@@ -14,5 +15,8 @@ func main() {
 	srv, _ := NewServer(*host, *port, *rootdir)
 
 	fmt.Println(srv.Address())
-	srv.Serve()
+	err := srv.Serve()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

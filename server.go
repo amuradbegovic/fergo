@@ -34,7 +34,7 @@ func NewServer(host string, port int, rootdir string) (Server, error) {
 }
 
 func (srv Server) Address() string {
-	return srv.Host + ":" + fmt.Sprintf("%d", srv.Port)
+	return ":" + fmt.Sprintf("%d", srv.Port)
 }
 
 func (srv Server) Serve() error {
