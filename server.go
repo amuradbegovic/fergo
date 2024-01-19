@@ -70,7 +70,7 @@ func (srv Server) ServeDir(path string) (string, error) {
 
 	relpath, _ := filepath.Rel(srv.Rootdir, path)
 	for _, file := range files {
-		menu = fmt.Sprintf("%s\n%s", menu, NewFromDirEntry(file, relpath, srv.Host, srv.Port).String())
+		menu = fmt.Sprint(menu, NewFromDirEntry(file, relpath, srv.Host, srv.Port).String())
 	}
 	menu += "\n.\n"
 	return menu, nil
@@ -84,30 +84,30 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	selector := string(request[:nread])
 	selector = strings.TrimSuffix(selector, "\r\n")
 	selector = strings.TrimSuffix(selector, "\n")
+	if !strings.HasPrefix(selector, "/") {
+		selector = "/" + selector
+	}
+	log.Printf("%s\t%s", selector, conn.RemoteAddr().String())
 
 	response := ""
 
-	log.Printf("%s\t%s", selector, conn.RemoteAddr().String())
-
-	path := srv.Rootdir + selector
-	fmt.Printf("Requested path: \"%s\"\n", path)
-
-	fileinfo, err := os.Stat(path)
-	if err != nil {
-		response = fmt.Sprintln(err, "\n.")
+	if strings.Contains(selector, "..") {
+		response = "Error: selector can't contain \"..\"\n"
 	} else {
-		if fileinfo.IsDir() {
-			response, err = srv.ServeDir(path)
-		} else {
-			response, err = ServeFile(path)
-		}
+		path := srv.Rootdir + selector
+		fmt.Printf("Requested path: \"%s\"\n", path)
+
+		fileinfo, err := os.Stat(path)
 		if err != nil {
-			response = fmt.Sprintln(err, "\n.")
+			response = "Error: resource not found\n"
+		} else {
+			if fileinfo.IsDir() {
+				response, _ = srv.ServeDir(path)
+			} else {
+				response, _ = ServeFile(path)
+			}
 		}
 	}
 
 	conn.Write([]byte(response))
-
-	//c.Write([]byte(fmt.Sprintln("iWelcome to port 70\n.")))
-
 }
