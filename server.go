@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -68,9 +67,8 @@ func (srv Server) ServeDir(path string) (string, error) {
 		return menu, err
 	}
 
-	relpath, _ := filepath.Rel(srv.Rootdir, path)
 	for _, file := range files {
-		menu = fmt.Sprint(menu, NewFromDirEntry(file, relpath, srv.Host, srv.Port).String())
+		menu = fmt.Sprint(menu, NewFromDirEntry(file, path, srv).String())
 	}
 	menu += "\n.\n"
 	return menu, nil
@@ -95,7 +93,6 @@ func (srv Server) HandleConnection(conn net.Conn) {
 		response = "Error: selector can't contain \"..\"\n"
 	} else {
 		path := srv.Rootdir + selector
-		fmt.Printf("Requested path: \"%s\"\n", path)
 
 		fileinfo, err := os.Stat(path)
 		if err != nil {
