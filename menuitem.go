@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 type MenuItem struct {
@@ -24,7 +23,8 @@ func NewFromDirEntry(dirent os.DirEntry, path string, srv Server) MenuItem {
 
 	result.DisplayName = dirent.Name()
 
-	relpath, _ := filepath.Rel(srv.Rootdir, path)
+	//relpath, _ := filepath.Rel(srv.RootDir, path)
+	relpath := srv.RelPath(path)
 
 	if relpath != "." {
 		result.Selector = "/" + relpath

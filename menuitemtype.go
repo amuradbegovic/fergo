@@ -27,7 +27,7 @@ func MIMETypeToGopherItemType(detectedMIME *mimetype.MIME) byte {
 }
 
 func MenuItemType(dirent os.DirEntry, path string) (byte, error) {
-	if dirent.IsDir() || strings.HasSuffix(dirent.Name(), ".gph") || strings.HasSuffix(dirent.Name(), ".gophermap") {
+	if dirent.IsDir() || strings.HasSuffix(dirent.Name(), ".gph") {
 		return '1', nil
 	}
 	detectedMIME, err := mimetype.DetectFile(path + "/" + dirent.Name())

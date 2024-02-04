@@ -5,54 +5,72 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 type Server struct {
 	Host    string
 	Port    int
-	Rootdir string
+	Network string
+	RootDir string
+	LogPath string
 }
 
-func NewServer(host string, port int, rootdir string) (Server, error) {
-	var srv Server
+func NewServer(host string, port int, network, rootdir, logpath string) (Server, error) {
 	if host == "" {
 		host = "localhost"
 	}
-	srv.Host = host
 	if rootdir == "" {
 		var err error
 		rootdir, err = os.Getwd()
 		if err != nil {
-			return srv, err
+			return Server{}, err
 		}
 	}
-	srv.Port = port
-	srv.Rootdir = rootdir
-	return srv, nil
+	return Server{host, port, network, rootdir, logpath}, nil
 }
 
 func (srv Server) Address() string {
 	return ":" + fmt.Sprintf("%d", srv.Port)
 }
 
+func (srv Server) RelPath(path string) string {
+	relpath, _ := filepath.Rel(srv.RootDir, path)
+	return relpath
+}
+
 func (srv Server) Serve() error {
-	lsn, err := net.Listen("tcp", srv.Address())
+	lsn, err := net.Listen(srv.Network, srv.Address())
 	if err != nil {
 		return err
 	}
 	defer lsn.Close()
+
+	if srv.LogPath != "" {
+		f, err := os.OpenFile(srv.LogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Printf("Error opening file: %v. Logging to stdout", err)
+		} else {
+			defer f.Close()
+			log.SetOutput(f)
+		}
+	}
+
 	for {
 		conn, err := lsn.Accept()
 		if err != nil {
 			return err
 		}
-
 		go srv.HandleConnection(conn)
 	}
 }
 
-func ServeFile(path string) (string, error) {
+func (srv Server) ServeFile(path string) (string, error) {
+
+	if strings.HasSuffix(path, ".gph") {
+		return ParseGPHFile(path, srv)
+	}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -61,6 +79,12 @@ func ServeFile(path string) (string, error) {
 }
 
 func (srv Server) ServeDir(path string) (string, error) {
+
+	indexFile, err := ParseGPHFile(path+"/index.gph", srv)
+	if err == nil {
+		return indexFile, nil
+	}
+
 	menu := ""
 	files, err := os.ReadDir(path)
 	if err != nil {
@@ -68,6 +92,7 @@ func (srv Server) ServeDir(path string) (string, error) {
 	}
 
 	for _, file := range files {
+
 		menu = fmt.Sprint(menu, NewFromDirEntry(file, path, srv).String())
 	}
 	menu += "\n.\n"
@@ -85,14 +110,14 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	if !strings.HasPrefix(selector, "/") {
 		selector = "/" + selector
 	}
-	log.Printf("%s\t%s", selector, conn.RemoteAddr().String())
+	log.Printf("%s\t%s", conn.RemoteAddr().String(), selector)
 
 	response := ""
 
 	if strings.Contains(selector, "..") {
 		response = "Error: selector can't contain \"..\"\n"
 	} else {
-		path := srv.Rootdir + selector
+		path := srv.RootDir + selector
 
 		fileinfo, err := os.Stat(path)
 		if err != nil {
@@ -101,10 +126,9 @@ func (srv Server) HandleConnection(conn net.Conn) {
 			if fileinfo.IsDir() {
 				response, _ = srv.ServeDir(path)
 			} else {
-				response, _ = ServeFile(path)
+				response, _ = srv.ServeFile(path)
 			}
 		}
 	}
-
 	conn.Write([]byte(response))
 }
