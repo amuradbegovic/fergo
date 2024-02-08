@@ -10,16 +10,20 @@ import (
 )
 
 type Server struct {
-	Host    string
-	Port    int
-	Network string
-	RootDir string
-	LogPath string
+	Host      string
+	Interface string
+	Port      int
+	Network   string
+	RootDir   string
+	LogPath   string
 }
 
-func NewServer(host string, port int, network, rootdir, logpath string) (Server, error) {
+func NewServer(host, netInterface string, port int, network, rootdir, logpath string) (Server, error) {
 	if host == "" {
 		host = "localhost"
+		if netInterface != "" {
+			host = netInterface
+		}
 	}
 	if rootdir == "" {
 		var err error
@@ -28,11 +32,11 @@ func NewServer(host string, port int, network, rootdir, logpath string) (Server,
 			return Server{}, err
 		}
 	}
-	return Server{host, port, network, rootdir, logpath}, nil
+	return Server{host, netInterface, port, network, rootdir, logpath}, nil
 }
 
 func (srv Server) Address() string {
-	return ":" + fmt.Sprintf("%d", srv.Port)
+	return srv.Interface + ":" + fmt.Sprintf("%d", srv.Port)
 }
 
 func (srv Server) RelPath(path string) string {
@@ -67,7 +71,6 @@ func (srv Server) Serve() error {
 }
 
 func (srv Server) ServeFile(path string) (string, error) {
-
 	if strings.HasSuffix(path, ".gph") {
 		return ParseGPHFile(path, srv)
 	}
@@ -79,7 +82,6 @@ func (srv Server) ServeFile(path string) (string, error) {
 }
 
 func (srv Server) ServeDir(path string) (string, error) {
-
 	indexFile, err := ParseGPHFile(path+"/index.gph", srv)
 	if err == nil {
 		return indexFile, nil
@@ -92,7 +94,6 @@ func (srv Server) ServeDir(path string) (string, error) {
 	}
 
 	for _, file := range files {
-
 		menu = fmt.Sprint(menu, NewFromDirEntry(file, path, srv).String())
 	}
 	menu += "\n.\n"
@@ -107,6 +108,10 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	selector := string(request[:nread])
 	selector = strings.TrimSuffix(selector, "\r\n")
 	selector = strings.TrimSuffix(selector, "\n")
+	if tabIndex := strings.Index(selector, "\t"); tabIndex != -1 {
+		selector = selector[:tabIndex]
+	}
+
 	if !strings.HasPrefix(selector, "/") {
 		selector = "/" + selector
 	}

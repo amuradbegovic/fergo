@@ -8,7 +8,8 @@ import (
 
 func main() {
 
-	host := flag.String("host", "localhost", "Host name shown in directory listings")
+	host := flag.String("host", "", "Host name shown in directory listings")
+	netInterface := flag.String("i", "", "Network interface that the server binds to")
 	port := flag.Int("p", 70, "Port that the server listens to")
 	rootdir := flag.String("d", "", "Root directory to serve content from (default is current directory)")
 	logfile := flag.String("l", "", "File where log output is written to (optional)")
@@ -23,7 +24,7 @@ func main() {
 		network = "tcp6"
 	}
 
-	srv, _ := NewServer(*host, *port, network, *rootdir, *logfile)
+	srv, _ := NewServer(*host, *netInterface, *port, network, *rootdir, *logfile)
 
 	fmt.Println(srv.Address())
 	err := srv.Serve()
