@@ -8,13 +8,13 @@ import (
 
 func main() {
 
-	host := flag.String("host", "", "Host name shown in directory listings")
+	host := flag.String("n", "", "Host name prikazan u linkovima na lokalne resurse")
 	netInterface := flag.String("i", "", "Network interface that the server binds to")
-	port := flag.Int("p", 70, "Port that the server listens to")
-	rootdir := flag.String("d", "", "Root directory to serve content from (default is current directory)")
-	logfile := flag.String("l", "", "File where log output is written to (optional)")
-	ipv4 := flag.Bool("4", false, "Only use IPv4")
-	ipv6 := flag.Bool("6", false, "Only use IPv6")
+	port := flag.Int("p", 70, "Port za kojeg se veže server")
+	rootdir := flag.String("d", "", "Root direktorij iz kojeg se poslužuje sadržaj (zadana vrijednost je trenutni radni directory)")
+	logfile := flag.String("l", "", "Datoteka u koju se bilježe zahtjevi klijenata (opcionalno)")
+	ipv4 := flag.Bool("4", false, "Koristi samo IPv4")
+	ipv6 := flag.Bool("6", false, "Koristi samo IPv6")
 	flag.Parse()
 
 	network := "tcp"
@@ -28,7 +28,9 @@ func main() {
 
 	fmt.Println(srv.Address())
 	err := srv.Serve()
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

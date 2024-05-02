@@ -11,6 +11,31 @@ import (
 	"strings"
 )
 
+func SplitGPHLine(line string) []string {
+	line = strings.TrimPrefix(line, "[")
+	line = strings.TrimSuffix(line, "]")
+
+	var fields []string
+	currentField := ""
+	for i := 0; i < len((line)); i++ {
+		if line[i] == '|' {
+			if i > 0 {
+				if line[i-1] == '\\' {
+					currentField += string(line[i])
+					continue
+				}
+			}
+			fields = append(fields, currentField)
+			currentField = ""
+		} else {
+			currentField += string(line[i])
+		}
+	}
+	fields = append(fields, currentField)
+
+	return fields
+}
+
 func GPHToMenuItem(line, path string, srv Server) (MenuItem, error) {
 
 	var mitem MenuItem
@@ -19,9 +44,7 @@ func GPHToMenuItem(line, path string, srv Server) (MenuItem, error) {
 		return mitem, errors.New("")
 	}
 
-	gphline := strings.TrimPrefix(line, "[")
-	gphline = strings.TrimSuffix(gphline, "]")
-	fields := strings.Split(gphline, "|")
+	fields := SplitGPHLine(line)
 	if len(fields) != 5 {
 		return mitem, errors.New("")
 	}

@@ -45,21 +45,21 @@ func (srv Server) RelPath(path string) string {
 }
 
 func (srv Server) Serve() error {
-	lsn, err := net.Listen(srv.Network, srv.Address())
-	if err != nil {
-		return err
-	}
-	defer lsn.Close()
-
 	if srv.LogPath != "" {
 		f, err := os.OpenFile(srv.LogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Printf("Error opening file: %v. Logging to stdout", err)
+			log.Printf("Greška pri otvaranju datoteke: %v. Bilježim na standardni izlaz.", err)
 		} else {
 			defer f.Close()
 			log.SetOutput(f)
 		}
 	}
+
+	lsn, err := net.Listen(srv.Network, srv.Address())
+	if err != nil {
+		return err
+	}
+	defer lsn.Close()
 
 	for {
 		conn, err := lsn.Accept()
@@ -115,6 +115,7 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	if !strings.HasPrefix(selector, "/") {
 		selector = "/" + selector
 	}
+
 	log.Printf("%s\t%s", conn.RemoteAddr().String(), selector)
 
 	response := ""
