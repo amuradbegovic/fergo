@@ -36,20 +36,19 @@ func SplitGPHLine(line string) []string {
 	return fields
 }
 
-func GPHToMenuItem(line, path string, srv Server) (MenuItem, error) {
-
+func GPHLineToMenuItem(line, path string, srv Server) (MenuItem, error) {
 	var mitem MenuItem
 
 	if !(strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]")) {
-		return mitem, errors.New("")
+		return mitem, errors.New("link mora biti okružen uglatim zagradama")
 	}
 
 	fields := SplitGPHLine(line)
 	if len(fields) != 5 {
-		return mitem, errors.New("")
+		return mitem, errors.New("link mora imati 5 polja")
 	}
 	if !(len(fields[0]) == 1) {
-		return mitem, errors.New("")
+		return mitem, errors.New("prvo polje mora sadržati samo jedan znak")
 	}
 	mitem.Type = fields[0][0]
 	mitem.DisplayName = fields[1]
@@ -70,7 +69,6 @@ func GPHToMenuItem(line, path string, srv Server) (MenuItem, error) {
 			return mitem, err
 		}
 		mitem.Port = portnumber
-
 	}
 
 	return mitem, nil
@@ -86,7 +84,7 @@ func ParseGPHFile(path string, srv Server) (string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		mitem, err := GPHToMenuItem(line, path, srv)
+		mitem, err := GPHLineToMenuItem(line, path, srv)
 		if err != nil {
 			mitem = MenuItem{'i', strings.TrimPrefix(line, "[|"), "", srv.Host, srv.Port}
 		}

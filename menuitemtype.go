@@ -7,7 +7,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-func MIMETypeToGopherItemType(detectedMIME *mimetype.MIME) byte {
+func MIMETypeToMenuItemType(detectedMIME *mimetype.MIME) byte {
 	for mtype := detectedMIME; mtype != nil; mtype = mtype.Parent() {
 		if mtype.Is("text/plain") {
 			return '0'
@@ -26,13 +26,13 @@ func MIMETypeToGopherItemType(detectedMIME *mimetype.MIME) byte {
 	return '9'
 }
 
-func MenuItemType(dirent os.DirEntry, path string) (byte, error) {
+func MenuItemType(dirent os.DirEntry, path string) byte {
 	if dirent.IsDir() || strings.HasSuffix(dirent.Name(), ".gph") {
-		return '1', nil
+		return '1'
 	}
 	detectedMIME, err := mimetype.DetectFile(path + "/" + dirent.Name())
 	if err != nil {
-		return '0', err
+		return '0'
 	}
-	return MIMETypeToGopherItemType(detectedMIME), nil
+	return MIMETypeToMenuItemType(detectedMIME)
 }

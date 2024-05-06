@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -30,11 +29,8 @@ func NewFromDirEntry(dirent os.DirEntry, path string, srv Server) MenuItem {
 	}
 	result.Selector += "/" + dirent.Name()
 
-	var err error
-	result.Type, err = MenuItemType(dirent, path)
-	if err != nil {
-		log.Fatal(err)
-	}
+	result.Type = MenuItemType(dirent, path)
+
 	result.Host = srv.Host
 	result.Port = srv.Port
 	return result

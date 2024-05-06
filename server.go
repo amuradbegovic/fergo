@@ -94,7 +94,7 @@ func (srv Server) ServeDir(path string) (string, error) {
 	}
 
 	for _, file := range files {
-		menu = fmt.Sprint(menu, NewFromDirEntry(file, path, srv).String())
+		menu += NewFromDirEntry(file, path, srv).String()
 	}
 	menu += "\n.\n"
 	return menu, nil
@@ -121,13 +121,13 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	response := ""
 
 	if strings.Contains(selector, "..") {
-		response = "Error: selector can't contain \"..\"\n"
+		response = "Greška: selektor ne smije sadržati \"..\"\n"
 	} else {
 		path := srv.RootDir + selector
 
 		fileinfo, err := os.Stat(path)
 		if err != nil {
-			response = "Error: resource not found\n"
+			response = "Greška: resurs nije pronađen\n"
 		} else {
 			if fileinfo.IsDir() {
 				response, _ = srv.ServeDir(path)
