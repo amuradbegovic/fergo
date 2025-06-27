@@ -48,7 +48,7 @@ func (srv Server) Serve() error {
 	if srv.LogPath != "" {
 		f, err := os.OpenFile(srv.LogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Printf("Greška pri otvaranju datoteke: %v. Bilježim na standardni izlaz.", err)
+			log.Printf("Error opening file: %v. Logging to stdout.", err)
 		} else {
 			defer f.Close()
 			log.SetOutput(f)
@@ -121,13 +121,13 @@ func (srv Server) HandleConnection(conn net.Conn) {
 	response := ""
 
 	if strings.Contains(selector, "..") {
-		response = "Greška: selektor ne smije sadržati \"..\"\n"
+		response = "Error: selector cannot contain \"..\"\n"
 	} else {
 		path := srv.RootDir + selector
 
 		fileinfo, err := os.Stat(path)
 		if err != nil {
-			response = "Greška: resurs nije pronađen\n"
+			response = "Error: resource not found\n"
 		} else {
 			if fileinfo.IsDir() {
 				response, _ = srv.ServeDir(path)
